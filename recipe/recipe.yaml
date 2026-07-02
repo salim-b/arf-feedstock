@@ -15,25 +15,33 @@ build:
     env:
       CARGO_PROFILE_RELEASE_LTO: fat
       CARGO_PROFILE_RELEASE_STRIP: symbols
+      # Tell `cc` crate to use clang-cl natively to compile build-time tools intended to be run on the host when cross-compiling from `win_64`
+      AR_x86_64_pc_windows_msvc: llvm-lib
+      CC_x86_64_pc_windows_msvc: clang-cl
+      CXX_x86_64_pc_windows_msvc: clang-cl
     content:
       - if: unix
         then:
           - cargo auditable install --path=crates/arf-console --root="$PREFIX" --no-track --locked --bins
-          # generate manpage and shell completions
-          - mkdir -p "$PREFIX"/share/bash-completion/completions "$PREFIX"/share/fish/vendor_completions.d "$PREFIX"/share/zsh/site-functions
-          - '"$PREFIX"/bin/arf completions bash > "$PREFIX"/share/bash-completion/completions/arf'
-          - '"$PREFIX"/bin/arf completions fish > "$PREFIX"/share/fish/vendor_completions.d/arf.fish'
-          - '"$PREFIX"/bin/arf completions zsh  > "$PREFIX"/share/zsh/site-functions/_arf'
+          # generate shell completions
+          - if: build_platform == host_platform
+            then:
+              - mkdir -p "$PREFIX"/share/bash-completion/completions "$PREFIX"/share/fish/vendor_completions.d "$PREFIX"/share/zsh/site-functions
+              - '"$PREFIX"/bin/arf completions bash > "$PREFIX"/share/bash-completion/completions/arf'
+              - '"$PREFIX"/bin/arf completions fish > "$PREFIX"/share/fish/vendor_completions.d/arf.fish'
+              - '"$PREFIX"/bin/arf completions zsh  > "$PREFIX"/share/zsh/site-functions/_arf'
       - if: win
         then:
           - cargo auditable install --path=crates/arf-console --root="%LIBRARY_PREFIX%" --no-track --locked --bins
           # generate shell completions
-          - mkdir "%LIBRARY_PREFIX%"\share\bash-completion\completions
-          - mkdir "%LIBRARY_PREFIX%"\share\fish\vendor_completions.d
-          - mkdir "%LIBRARY_PREFIX%"\share\zsh\site-functions
-          - '"%LIBRARY_BIN%"\arf.exe completions bash > "%LIBRARY_PREFIX%"\share\bash-completion\completions\arf'
-          - '"%LIBRARY_BIN%"\arf.exe completions fish > "%LIBRARY_PREFIX%"\share\fish\vendor_completions.d\arf.fish'
-          - '"%LIBRARY_BIN%"\arf.exe completions zsh  > "%LIBRARY_PREFIX%"\share\zsh\site-functions\_arf'
+          - if: build_platform == host_platform
+            then:
+              - mkdir "%LIBRARY_PREFIX%"\share\bash-completion\completions
+              - mkdir "%LIBRARY_PREFIX%"\share\fish\vendor_completions.d
+              - mkdir "%LIBRARY_PREFIX%"\share\zsh\site-functions
+              - '"%LIBRARY_BIN%"\arf.exe completions bash > "%LIBRARY_PREFIX%"\share\bash-completion\completions\arf'
+              - '"%LIBRARY_BIN%"\arf.exe completions fish > "%LIBRARY_PREFIX%"\share\fish\vendor_completions.d\arf.fish'
+              - '"%LIBRARY_BIN%"\arf.exe completions zsh  > "%LIBRARY_PREFIX%"\share\zsh\site-functions\_arf'
       - cargo-bundle-licenses --format=yaml --output=./THIRDPARTY.yml
 
 requirements:
@@ -43,21 +51,26 @@ requirements:
     - ${{ compiler('rust') }}
     - cargo-auditable
     - cargo-bundle-licenses
+    - if: host_platform == "win-64"
+      then:
+        - clang
 
 tests:
   - script:
-      - arf --help
-      - arf --version
+      - if: build_platform == host_platform
+        then:
+          - arf --help
+          - arf --version
   - package_contents:
       bin:
         - arf
       files:
-        - if: unix
+        - if: unix and build_platform == host_platform
           then:
             - share/bash-completion/completions/arf
             - share/fish/vendor_completions.d/arf.fish
             - share/zsh/site-functions/_arf
-        - if: win
+        - if: win and build_platform == host_platform
           then:
             - Library/share/bash-completion/completions/arf
             - Library/share/fish/vendor_completions.d/arf.fish
