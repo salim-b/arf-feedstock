@@ -1,5 +1,5 @@
 context:
-  version: "0.4.2"
+  version: "0.4.3"
 
 package:
   name: arf
@@ -7,10 +7,10 @@ package:
 
 source:
   url: https://github.com/eitsupi/arf/archive/refs/tags/v${{ version }}.tar.gz
-  sha256: eeaddc41d7bfc514e33ebdb9ee2b8b8aac642e4d6940c68b9d0a0bf036f09ed0
+  sha256: 38e3af061b7f2a65c89311cb445aaa2680282efc65a3f12a7b945f87aed06b80
 
 build:
-  number: 1
+  number: 0
   script:
     env:
       CARGO_PROFILE_RELEASE_LTO: fat
