@@ -20,9 +20,10 @@ build:
       CC_x86_64_pc_windows_msvc: clang-cl
       CXX_x86_64_pc_windows_msvc: clang-cl
     content:
+      - cd crates/arf-console
       - if: unix
         then:
-          - cargo auditable install --path=crates/arf-console --root="$PREFIX" --no-track --locked --bins
+          - cargo auditable install --path=. --root="$PREFIX" --no-track --locked --bins
           # generate shell completions
           - if: build_platform == host_platform
             then:
@@ -32,7 +33,7 @@ build:
               - '"$PREFIX"/bin/arf completions zsh  > "$PREFIX"/share/zsh/site-functions/_arf'
       - if: win
         then:
-          - cargo auditable install --path=crates/arf-console --root="%LIBRARY_PREFIX%" --no-track --locked --bins
+          - cargo auditable install --path=. --root="%LIBRARY_PREFIX%" --no-track --locked --bins
           # generate shell completions
           - if: build_platform == host_platform
             then:
@@ -42,7 +43,7 @@ build:
               - '"%LIBRARY_BIN%"\arf.exe completions bash > "%LIBRARY_PREFIX%"\share\bash-completion\completions\arf'
               - '"%LIBRARY_BIN%"\arf.exe completions fish > "%LIBRARY_PREFIX%"\share\fish\vendor_completions.d\arf.fish'
               - '"%LIBRARY_BIN%"\arf.exe completions zsh  > "%LIBRARY_PREFIX%"\share\zsh\site-functions\_arf'
-      - cargo-bundle-licenses --format=yaml --output=./THIRDPARTY.yml
+      - cargo-bundle-licenses --format=yaml --output=../../THIRDPARTY.yml
 
 requirements:
   build:
@@ -57,10 +58,8 @@ requirements:
 
 tests:
   - script:
-      - if: build_platform == host_platform
-        then:
-          - arf --help
-          - arf --version
+      - arf --help
+      - arf --version
   - package_contents:
       bin:
         - arf
